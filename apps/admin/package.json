@@ -18,7 +18,7 @@
     "@webiny/plugins": "5.43.5",
     "@webiny/project-utils": "5.43.5",
     "core-js": "3.39.0",
-    "cross-fetch": "3.2.0",
+    "cross-fetch": "3.1.5",
     "invariant": "2.2.4",
     "prop-types": "15.8.1",
     "react": "18.2.0",

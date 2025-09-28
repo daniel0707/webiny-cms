@@ -46,7 +46,6 @@
     "@webiny/handler-client": "5.43.5",
     "@webiny/handler-db": "5.43.5",
     "@webiny/handler-graphql": "5.43.5",
-    "@webiny/handler-logs": "5.43.5",
     "@webiny/project-utils": "5.43.5"
   }
 }
