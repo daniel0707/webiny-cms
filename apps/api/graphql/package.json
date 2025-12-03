@@ -6,6 +6,8 @@
     "watch": "yarn webiny run watch"
   },
   "dependencies": {
+    "@lexical/markdown": "0.23.1",
+    "@lexical/table": "0.23.1",
     "@webiny/api-aco": "5.43.5",
     "@webiny/api-admin-users": "5.43.5",
     "@webiny/api-admin-users-so-ddb": "5.43.5",
@@ -46,6 +48,8 @@
     "@webiny/handler-client": "5.43.5",
     "@webiny/handler-db": "5.43.5",
     "@webiny/handler-graphql": "5.43.5",
-    "@webiny/project-utils": "5.43.5"
+    "@webiny/lexical-converter": "^5.43.5",
+    "@webiny/project-utils": "5.43.5",
+    "lexical": "0.23.1"
   }
 }
