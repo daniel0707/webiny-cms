@@ -315,7 +315,7 @@ export const GITHUB_CARD: ElementTransformer = {
         }
 
         const repoPath = node.getRepoPath();
-        return `:::github{${repoPath}}`;
+        return `::github{repo="${repoPath}"}`;
     },
     regExp: /NEVER_MATCH/,
     replace: () => {},

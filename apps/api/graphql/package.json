@@ -6,6 +6,8 @@
     "watch": "yarn webiny run watch"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.958.0",
+    "@aws-sdk/client-sfn": "^3.962.0",
     "@lexical/markdown": "0.23.1",
     "@lexical/table": "0.23.1",
     "@webiny/api-aco": "5.43.5",
@@ -50,6 +52,10 @@
     "@webiny/handler-graphql": "5.43.5",
     "@webiny/lexical-converter": "^5.43.5",
     "@webiny/project-utils": "5.43.5",
+    "image-size": "^2.0.2",
     "lexical": "0.23.1"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2"
   }
 }

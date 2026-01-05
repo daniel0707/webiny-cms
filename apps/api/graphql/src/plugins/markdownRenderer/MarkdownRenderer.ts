@@ -14,6 +14,7 @@ import { createHeadlessEditor } from "@lexical/headless";
 import { $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
 import { allNodes } from "@webiny/lexical-nodes";
 import { TableNode, TableRowNode, TableCellNode } from "@lexical/table";
+import { CodeNode, CodeHighlightNode } from "@lexical/code";
 
 // Custom nodes for our blog
 import { AdmonitionNode } from "./nodes/AdmonitionNode";
@@ -44,6 +45,8 @@ export class MarkdownRenderer {
                 TableNode,
                 TableRowNode,
                 TableCellNode,
+                CodeNode,
+                CodeHighlightNode,
                 // Our custom nodes
                 AdmonitionNode,
                 CharacterChatNode,

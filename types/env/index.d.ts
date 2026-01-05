@@ -72,5 +72,9 @@ declare namespace NodeJS {
         WEBINY_MAILER_REPLY_TO?: string;
         WEBINY_MAILER_FROM?: string;
         WEBINY_MAILER_PASSWORD_SECRET?: string;
+        /**
+         * Content publish hook
+         */
+        STEP_FUNCTION_ARN?: string;
     }
 }

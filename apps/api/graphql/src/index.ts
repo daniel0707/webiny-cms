@@ -40,6 +40,8 @@ import { createLogger } from "@webiny/api-log";
 // Imports plugins created via scaffolding utilities.
 import scaffoldsPlugins from "./plugins/scaffolds";
 import { extensions } from "./extensions";
+import { createFileManagerImageMetadata } from "./plugins/fileManagerImageMetadata";
+import contentPublishHook from "./plugins/contentPublishHook";
 
 const debug = process.env.DEBUG === "true";
 
@@ -77,6 +79,7 @@ export const handler = createHandler({
             })
         }),
         createFileManagerGraphQL(),
+        createFileManagerImageMetadata(),
         createAssetDelivery({ documentClient }),
         fileManagerS3(),
         prerenderingServicePlugins({
@@ -108,6 +111,7 @@ export const handler = createHandler({
         createAuditLogs(),
         createAcoHcmsContext(),
         createHcmsTasks(),
+        contentPublishHook,
         scaffoldsPlugins(),
         extensions()
     ],

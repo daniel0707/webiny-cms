@@ -384,9 +384,9 @@ function mapToTableCells(textContent: string): Array<TableCellNode> | null {
 /**
  * GITHUB_CARD transformer for single-line GitHub repository cards
  * 
- * Format: :::github{user/repo}
+ * Format: ::github{repo="user/repo"}
  * 
- * Unlike admonitions and character chats, this is a single line with no closing :::
+ * Unlike admonitions and character chats, this is a single line with no closing ::
  * The regex matches the full pattern and creates a GitHubCardNode
  */
 export const GITHUB_CARD: ElementTransformer = {
@@ -397,9 +397,9 @@ export const GITHUB_CARD: ElementTransformer = {
         }
 
         const repoPath = node.getRepoPath();
-        return `:::github{${repoPath}}`;
+        return `::github{repo="${repoPath}"}`;
     },
-    regExp: /^:::github\{([^}]+)\}\s*$/,
+    regExp: /^::github\{repo="([^"]+)"\}\s*$/,
     replace: (parentNode, _1, match) => {
         const repoPath = match[1];
         
@@ -744,6 +744,7 @@ export const WEBINY_ORDERED_LIST: ElementTransformer = {
     replace: (parentNode, _1, match) => {
         const indent = match[1]?.length ?? 0;
         const indentLevel = Math.floor(indent / 4);
+        const itemNumber = parseInt(match[2], 10); // Extract the number from markdown
         
         // Create list item with text content
         const textContent = parentNode.getTextContent().replace(/^(\s*)(\d+)\.\s/, '');
@@ -773,8 +774,12 @@ export const WEBINY_ORDERED_LIST: ElementTransformer = {
             }
             parentNode.remove();
         } else {
-            // Create new list
+            // Create new list - set start number from markdown
             const list = $createWebinyListNode('number');
+            // Set the start value if available
+            if (typeof (list as any).setStart === 'function') {
+                (list as any).setStart(itemNumber);
+            }
             list.append(listItem);
             parentNode.replace(list);
         }
