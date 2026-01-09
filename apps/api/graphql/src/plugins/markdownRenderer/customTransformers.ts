@@ -306,6 +306,7 @@ export const TABLE: ElementTransformer = {
 
 /**
  * GITHUB_CARD transformer
+ * Uses remark directive syntax - leaf directive (two colons, no closing)
  */
 export const GITHUB_CARD: ElementTransformer = {
     dependencies: [GitHubCardNode],

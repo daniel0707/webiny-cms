@@ -382,12 +382,12 @@ function mapToTableCells(textContent: string): Array<TableCellNode> | null {
 }
 
 /**
- * GITHUB_CARD transformer for single-line GitHub repository cards
+ * GITHUB_CARD transformer for GitHub repository cards
  * 
  * Format: ::github{repo="user/repo"}
  * 
- * Unlike admonitions and character chats, this is a single line with no closing ::
- * The regex matches the full pattern and creates a GitHubCardNode
+ * Uses remark directive syntax - leaf directive (two colons, no closing)
+ * Leaf directives are block-level elements without content
  */
 export const GITHUB_CARD: ElementTransformer = {
     dependencies: [GitHubCardNode],

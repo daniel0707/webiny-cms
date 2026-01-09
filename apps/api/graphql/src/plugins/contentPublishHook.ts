@@ -21,13 +21,11 @@ export default new ContextPlugin<CmsContext>(async (context) => {
         console.log(`Content published: ${entry.id}`);
 
         try {
-            // Extract content data
+            // Simple payload - just the entry ID
+            // The Step Function will fetch full content via GraphQL API
             const payload = {
                 entryId: entry.id,
-                title: entry.values['postHeadline'] || "",
-                description: entry.values['postDescription'] || "",
-                content: extractContentText(entry.values['postSections']),
-                environment: process.env.WEBINY_ENV || "prod",
+                environment: process.env.WEBINY_ENV || "dev",
                 publishedAt: new Date().toISOString(),
             };
 
@@ -62,20 +60,3 @@ export default new ContextPlugin<CmsContext>(async (context) => {
         }
     });
 });
-
-/**
- * Extract plain text from post sections for AI processing
- */
-function extractContentText(sections: any[]): string {
-    if (!sections || !Array.isArray(sections)) {
-        return "";
-    }
-
-    return sections
-        .map((section) => {
-            // Extract markdown content from each section
-            return section.postSectionContent || "";
-        })
-        .join("\n\n")
-        .trim();
-}
