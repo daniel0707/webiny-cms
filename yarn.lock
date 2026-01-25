@@ -13520,6 +13520,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@webiny/lexical-editor@patch:@webiny/lexical-editor@npm%3A5.43.5#~/.yarn/patches/@webiny-lexical-editor-npm-5.43.5-efc17bc689.patch":
+  version: 5.43.5
+  resolution: "@webiny/lexical-editor@patch:@webiny/lexical-editor@npm%3A5.43.5#~/.yarn/patches/@webiny-lexical-editor-npm-5.43.5-efc17bc689.patch::version=5.43.5&hash=1fafd8"
+  dependencies:
+    "@emotion/react": "npm:11.10.8"
+    "@lexical/code": "npm:0.23.1"
+    "@lexical/history": "npm:0.23.1"
+    "@lexical/react": "npm:0.23.1"
+    "@lexical/rich-text": "npm:0.23.1"
+    "@lexical/selection": "npm:0.23.1"
+    "@lexical/text": "npm:0.23.1"
+    "@lexical/utils": "npm:0.23.1"
+    "@webiny/lexical-nodes": "npm:5.43.5"
+    "@webiny/lexical-theme": "npm:5.43.5"
+    "@webiny/react-composition": "npm:5.43.5"
+    "@webiny/react-properties": "npm:5.43.5"
+    emotion: "npm:10.0.27"
+    lexical: "npm:0.23.1"
+    react: "npm:18.2.0"
+    react-dom: "npm:18.2.0"
+  checksum: 10c0/6aed29a08029112be06cf28e49693e34ec37919f1c85e6dfe891cca234c6168cd41a17e8ee1af5a3691bddf04564a585846f7a70c777b613f92d970369243985
+  languageName: node
+  linkType: hard
+
 "@webiny/lexical-nodes@npm:5.43.5":
   version: 5.43.5
   resolution: "@webiny/lexical-nodes@npm:5.43.5"

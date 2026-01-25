@@ -29,3 +29,5 @@ cypress.json
 !.yarn/versions
 .pnp.*
 .yarn
+chrome/
+.vscode/mcp.json

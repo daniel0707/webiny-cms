@@ -14,10 +14,6 @@ import {
     LinkNode, 
     $isImageNode, 
     ImageNode,
-    $isHeadingNode as $isWebinyHeadingNode,
-    HeadingNode as WebinyHeadingNode,
-    $isQuoteNode as $isWebinyQuoteNode,
-    QuoteNode as WebinyQuoteNode,
     $isListNode as $isWebinyListNode,
     ListNode as WebinyListNode,
     $isListItemNode as $isWebinyListItemNode,
@@ -39,44 +35,6 @@ import { $isCharacterChatNode, CharacterChatNode } from "./nodes/CharacterChatNo
 import { $isGitHubCardNode, GitHubCardNode } from "./nodes/GitHubCardNode";
 import { $isHorizontalRuleNode, HorizontalRuleNode } from "./nodes/HorizontalRuleNode";
 import { emojiToName } from "./emojiData";
-
-/**
- * Custom HEADING transformer for Webiny's HeadingNode
- * Webiny uses a custom HeadingNode with type "heading-element"
- */
-export const WEBINY_HEADING: ElementTransformer = {
-    dependencies: [WebinyHeadingNode],
-    export: (node, exportChildren) => {
-        if (!$isWebinyHeadingNode(node)) {
-            return null;
-        }
-        const tag = node.getTag();
-        const level = parseInt(tag.slice(1), 10); // h1 -> 1, h2 -> 2, etc.
-        const prefix = '#'.repeat(level);
-        return `${prefix} ${exportChildren(node)}`;
-    },
-    regExp: /NEVER_MATCH/,
-    replace: () => {},
-    type: 'element'
-};
-
-/**
- * Custom QUOTE transformer for Webiny's QuoteNode
- * Webiny uses a custom QuoteNode with type "quote-element"  
- */
-export const WEBINY_QUOTE: ElementTransformer = {
-    dependencies: [WebinyQuoteNode],
-    export: (node, exportChildren) => {
-        if (!$isWebinyQuoteNode(node)) {
-            return null;
-        }
-        const lines = exportChildren(node).split('\n');
-        return lines.map(line => `> ${line}`).join('\n');
-    },
-    regExp: /NEVER_MATCH/,
-    replace: () => {},
-    type: 'element'
-};
 
 /**
  * Custom LIST transformer for Webiny's ListNode
@@ -407,9 +365,7 @@ export function convertEmojisToShortcodes(text: string): string {
  * Combined with Lexical's default TRANSFORMERS in the renderer
  */
 export const CUSTOM_TRANSFORMERS: Transformer[] = [
-    // Webiny node replacements (must come first to override defaults)
-    WEBINY_HEADING,
-    WEBINY_QUOTE,
+    // Webiny node replacements
     WEBINY_LIST,
     WEBINY_LINK,
     WEBINY_IMAGE,

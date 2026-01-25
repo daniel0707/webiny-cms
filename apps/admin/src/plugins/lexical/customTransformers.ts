@@ -3,6 +3,8 @@ import { $createTextNode, $isTextNode, $createParagraphNode, $isParagraphNode, $
 import { 
     $createLinkNode, $isLinkNode, LinkNode, 
     $createImageNode, $isImageNode, ImageNode,
+    $createHeadingNode, $isHeadingNode, HeadingNode,
+    $createQuoteNode, $isQuoteNode, QuoteNode,
     $isListNode as $isWebinyListNode, ListNode as WebinyListNode, $createListNode as $createWebinyListNode,
     $isListItemNode as $isWebinyListItemNode, ListItemNode as WebinyListItemNode, $createListItemNode as $createWebinyListItemNode
 } from "@webiny/lexical-nodes";
@@ -23,6 +25,66 @@ import { $createAdmonitionNode, $isAdmonitionNode, AdmonitionNode, AdmonitionTyp
 import { $createCharacterChatNode, $isCharacterChatNode, CharacterChatNode } from "./nodes/CharacterChatNode";
 import { $createGitHubCardNode, $isGitHubCardNode, GitHubCardNode } from "./nodes/GitHubCardNode";
 import { nameToEmoji } from "./emojiData";
+
+/**
+ * Custom HEADING transformer for Webiny's HeadingNode
+ * Uses Webiny's HeadingNode which extends Lexical's base HeadingNode
+ * with additional theme and typography support
+ */
+export const WEBINY_HEADING: ElementTransformer = {
+    dependencies: [HeadingNode],
+    export: (node, exportChildren) => {
+        if (!$isHeadingNode(node)) {
+            return null;
+        }
+        const level = Number(node.getTag().slice(1)); // h1 -> 1, h2 -> 2, etc.
+        const prefix = '#'.repeat(level);
+        return `${prefix} ${exportChildren(node)}`;
+    },
+    // Only match the prefix, not the content - content becomes children
+    regExp: /^(#{1,6})\s/,
+    replace: (parentNode, children, match) => {
+        const tag = ('h' + match[1].length) as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+        const heading = $createHeadingNode(tag);
+        heading.append(...children);
+        parentNode.replace(heading);
+    },
+    type: 'element'
+};
+
+/**
+ * Custom QUOTE transformer for Webiny's QuoteNode
+ * Uses Webiny's QuoteNode which extends Lexical's base QuoteNode
+ */
+export const WEBINY_QUOTE: ElementTransformer = {
+    dependencies: [QuoteNode],
+    export: (node, exportChildren) => {
+        if (!$isQuoteNode(node)) {
+            return null;
+        }
+        const lines = exportChildren(node).split('\n');
+        return lines.map(line => `> ${line}`).join('\n');
+    },
+    // Only match the prefix, not the content
+    regExp: /^>\s/,
+    replace: (parentNode, children, _match, isImport) => {
+        if (isImport) {
+            const previousSibling = parentNode.getPreviousSibling();
+            // If previous sibling is also a quote, append to it
+            if ($isQuoteNode(previousSibling)) {
+                previousSibling.append(...children);
+                previousSibling.select(0, 0);
+                parentNode.remove();
+                return;
+            }
+            const quote = $createQuoteNode();
+            quote.append(...children);
+            parentNode.replace(quote);
+            quote.select(0, 0);
+        }
+    },
+    type: 'element'
+};
 
 /**
  * Custom LINK transformer that works with Webiny's LinkNode

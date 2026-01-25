@@ -1,0 +1,13 @@
+diff --git a/components/Editor/RichTextEditor.js b/components/Editor/RichTextEditor.js
+index 0238c5a691436db5b29073493aede31ff6e5e2e0..140914416dfb2e4b1b289453f920810c059b67ac 100644
+--- a/components/Editor/RichTextEditor.js
++++ b/components/Editor/RichTextEditor.js
+@@ -144,7 +144,7 @@ var BaseRichTextEditor = function BaseRichTextEditor(_ref) {
+       externalHistoryState: historyState
+     }), onBlur && /*#__PURE__*/_react.default.createElement(_BlurEventPlugin.BlurEventPlugin, {
+       onBlur: onBlur
+-    }), focus && /*#__PURE__*/_react.default.createElement(_LexicalAutoFocusPlugin.AutoFocusPlugin, null), configPlugins, children, /*#__PURE__*/_react.default.createElement(_LexicalRichTextPlugin.RichTextPlugin, {
++    }), /*focus*/false && /*#__PURE__*/_react.default.createElement(_LexicalAutoFocusPlugin.AutoFocusPlugin, null), configPlugins, children, /*#__PURE__*/_react.default.createElement(_LexicalRichTextPlugin.RichTextPlugin, {
+       contentEditable: /*#__PURE__*/_react.default.createElement("div", {
+         className: "editor-scroller",
+         style: (0, _objectSpread2.default)({}, sizeStyle)

@@ -3,6 +3,9 @@
  * 
  * This is a simplified version without DOM dependencies.
  * Only needs serialization/deserialization for markdown conversion.
+ * 
+ * Uses DecoratorNode on client, but ElementNode here for compatibility
+ * with headless editor (DecoratorNode requires React on client).
  */
 
 import type {
@@ -53,19 +56,17 @@ export class GitHubCardNode extends ElementNode {
     }
 
     static override importJSON(serializedNode: SerializedGitHubCardNode): GitHubCardNode {
-        const node = $createGitHubCardNode(serializedNode.repoPath);
-        node.setFormat(serializedNode.format);
-        node.setIndent(serializedNode.indent);
-        node.setDirection(serializedNode.direction);
-        return node;
+        // Handle both old and new serialization formats
+        const repoPath = serializedNode.repoPath || 'unknown/repo';
+        return $createGitHubCardNode(repoPath);
     }
 
     override exportJSON(): SerializedGitHubCardNode {
         return {
             ...super.exportJSON(),
-            repoPath: this.getRepoPath(),
             type: 'github-card',
-            version: 1
+            version: 1,
+            repoPath: this.__repoPath,
         };
     }
 }

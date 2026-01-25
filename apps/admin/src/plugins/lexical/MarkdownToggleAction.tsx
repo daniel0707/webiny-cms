@@ -9,11 +9,11 @@ import {
     INLINE_CODE,
     ITALIC_STAR,
     STRIKETHROUGH,
-    HEADING,
-    QUOTE,
     CODE
 } from "@lexical/markdown";
 import { 
+    WEBINY_HEADING,
+    WEBINY_QUOTE,
     WEBINY_LINK, 
     WEBINY_IMAGE, 
     HORIZONTAL_RULE, 
@@ -34,8 +34,8 @@ const TRANSFORMERS = [
     INLINE_CODE,
     ITALIC_STAR,
     STRIKETHROUGH,
-    HEADING,
-    QUOTE,
+    WEBINY_HEADING,  // Use Webiny's HeadingNode for proper theme support
+    WEBINY_QUOTE,    // Use Webiny's QuoteNode for proper theme support
     CODE,
     GITHUB_CARD,     // Single-line :::github{user/repo} - must come before ADMONITION
     CHARACTER_CHAT,  // Must come before ADMONITION to match :::[name](url) before :::type, and before WEBINY_IMAGE to match [name](url) in character chat context
@@ -99,7 +99,7 @@ export const MarkdownToggleAction = () => {
                                 markdownContent,
                                 TRANSFORMERS
                             );
-                        }, { discrete: true });
+                        });
                     } catch (error) {
                         console.error('[MARKDOWN] Error in FROM conversion update:', error);
                         throw error;

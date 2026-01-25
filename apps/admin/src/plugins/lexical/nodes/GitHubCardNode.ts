@@ -1,8 +1,9 @@
 /**
  * GitHubCardNode - Custom Lexical node for GitHub repository/user cards
  * 
- * Renders as a clickable link with GitHub icon
- * Format: :::github{user/repo}
+ * Renders as a clickable link with GitHub icon.
+ * Uses DecoratorNode for self-contained blocks without children.
+ * Format: ::github{repo="user/repo"}
  */
 
 import type {
@@ -11,20 +12,20 @@ import type {
     DOMExportOutput,
     LexicalNode,
     NodeKey,
-    SerializedElementNode,
+    SerializedLexicalNode,
     Spread
 } from 'lexical';
 
-import { ElementNode } from 'lexical';
+import { DecoratorNode } from 'lexical';
 
 export type SerializedGitHubCardNode = Spread<
     {
         repoPath: string;
     },
-    SerializedElementNode
+    SerializedLexicalNode
 >;
 
-export class GitHubCardNode extends ElementNode {
+export class GitHubCardNode extends DecoratorNode<null> {
     __repoPath: string;
 
     static override getType(): string {
@@ -55,9 +56,9 @@ export class GitHubCardNode extends ElementNode {
             link.href = `https://github.com/${this.__repoPath}`;
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
-            link.setAttribute('data-github-card', 'true');
-            link.style.cssText = 'display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; text-decoration: none; color: #24292f; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s ease;';
-            
+                link.setAttribute('data-github-card', 'true');
+                link.style.cssText = 'display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; text-decoration: none; color: #24292f; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s ease;';
+
             // Add GitHub icon SVG
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.setAttribute('height', '16');
@@ -65,18 +66,18 @@ export class GitHubCardNode extends ElementNode {
             svg.setAttribute('viewBox', '0 0 16 16');
             svg.setAttribute('fill', 'currentColor');
             svg.style.cssText = 'flex-shrink: 0;';
-            
+
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             path.setAttribute('d', 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z');
             svg.appendChild(path);
-            
+
             // Add repo path text
             const span = document.createElement('span');
             span.textContent = this.__repoPath;
-            
+
             link.appendChild(svg);
             link.appendChild(span);
-            
+
             // Add hover effects
             link.addEventListener('mouseenter', () => {
                 link.style.background = '#eaeef2';
@@ -84,7 +85,12 @@ export class GitHubCardNode extends ElementNode {
             link.addEventListener('mouseleave', () => {
                 link.style.background = '#f6f8fa';
             });
-            
+
+            // Prevent the element from becoming focusable or editable so the caret
+            // cannot be placed inside the node; selection will remain at element-level.
+            link.tabIndex = -1;
+            link.setAttribute('contentEditable', 'false');
+
             return link;
         } catch (error) {
             console.error('[GitHubCardNode] createDOM failed:', error);
@@ -96,36 +102,23 @@ export class GitHubCardNode extends ElementNode {
         }
     }
 
+    // Prevent keyboard node-selection for this decorator so caret won't enter it.
+    override isKeyboardSelectable(): boolean {
+        return false;
+    }
+
+    override decorate(): null {
+            return null;
+        }
+
     override updateDOM(): false {
         return false;
     }
 
     static override importJSON(serializedNode: SerializedGitHubCardNode): GitHubCardNode {
-        try {
-            if (!serializedNode.repoPath) {
-                console.error('[GitHubCardNode] Missing repoPath in serialized node');
-                return $createGitHubCardNode('error/missing-repo-path');
-            }
-            
-            const node = $createGitHubCardNode(serializedNode.repoPath);
-            
-            // Only set properties if they exist and are valid
-            if (serializedNode.format !== undefined && serializedNode.format !== null) {
-                node.setFormat(serializedNode.format);
-            }
-            if (serializedNode.indent !== undefined && serializedNode.indent !== null && serializedNode.indent > 0) {
-                node.setIndent(serializedNode.indent);
-            }
-            if (serializedNode.direction && serializedNode.direction !== null) {
-                node.setDirection(serializedNode.direction);
-            }
-            
-            return node;
-        } catch (error) {
-            console.error('[GitHubCardNode] importJSON failed:', error, serializedNode);
-            // Return a fallback node to prevent breaking the entire editor
-            return $createGitHubCardNode(serializedNode.repoPath || 'error/loading');
-        }
+        const repoPath = serializedNode.repoPath || 'unknown/repo';
+        const node = $createGitHubCardNode(repoPath);
+        return node;
     }
 
     override exportJSON(): SerializedGitHubCardNode {
@@ -152,39 +145,23 @@ export class GitHubCardNode extends ElementNode {
     }
 
     override exportDOM(): DOMExportOutput {
-        const element = document.createElement('div');
-        element.setAttribute('data-lexical-github-card', 'true');
-        element.setAttribute('data-repo-path', this.__repoPath);
-        
-        const link = document.createElement('a');
-        link.href = `https://github.com/${this.__repoPath}`;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.textContent = this.__repoPath;
-        link.style.cssText = 'display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px;';
-        
+            const element = document.createElement('div');
+            element.setAttribute('data-lexical-github-card', 'true');
+            element.setAttribute('data-repo-path', this.__repoPath);
+
+                const link = document.createElement('a');
+                link.href = `https://github.com/${this.__repoPath}`;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.textContent = this.__repoPath;
+                link.style.cssText = 'display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px;';
+
         element.appendChild(link);
-        return { element };
+            return { element };
     }
 
-    // Block-level leaf node - cannot contain children
+    // Block-level node
     override isInline(): boolean {
-        return false;
-    }
-
-    override canBeEmpty(): boolean {
-        return true;
-    }
-
-    override canInsertTextBefore(): boolean {
-        return false;
-    }
-
-    override canInsertTextAfter(): boolean {
-        return false;
-    }
-
-    override collapseAtStart(): boolean {
         return false;
     }
 }

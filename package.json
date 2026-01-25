@@ -83,7 +83,8 @@
     "@types/react": "18.2.79",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "typescript": "5.3.3"
+    "typescript": "5.3.3",
+    "@webiny/lexical-editor@npm:5.43.5": "patch:@webiny/lexical-editor@npm%3A5.43.5#~/.yarn/patches/@webiny-lexical-editor-npm-5.43.5-efc17bc689.patch"
   },
   "engines": {
     "node": "^20.0.0"
