@@ -14,6 +14,8 @@ import {
     LinkNode, 
     $isImageNode, 
     ImageNode,
+    $isHeadingNode,
+    HeadingNode,
     $isListNode as $isWebinyListNode,
     ListNode as WebinyListNode,
     $isListItemNode as $isWebinyListItemNode,
@@ -195,6 +197,29 @@ export const WEBINY_IMAGE: TextMatchTransformer = {
 };
 
 /**
+ * WEBINY_HEADING transformer for server-side Markdown export
+ * Exports Webiny HeadingNode to Markdown heading syntax (e.g., `## Title`).
+ */
+export const WEBINY_HEADING: ElementTransformer = {
+    dependencies: [HeadingNode],
+    export: (node, exportChildren) => {
+        if (!$isHeadingNode(node)) {
+            return null;
+        }
+
+        // Webiny's HeadingNode typically exposes getTag() -> 'h1'..'h6'
+        const tag = typeof (node as any).getTag === 'function' ? (node as any).getTag() : 'h1';
+        const level = Math.min(6, Math.max(1, Number(tag.slice(1) || 1)));
+        const prefix = '#'.repeat(level);
+
+        return `${prefix} ${exportChildren(node)}`;
+    },
+    regExp: /NEVER_MATCH/, // export-only on server
+    replace: () => {},
+    type: 'element'
+};
+
+/**
  * HORIZONTAL_RULE transformer
  */
 export const HORIZONTAL_RULE: ElementTransformer = {
@@ -368,6 +393,7 @@ export const CUSTOM_TRANSFORMERS: Transformer[] = [
     // Webiny node replacements
     WEBINY_LIST,
     WEBINY_LINK,
+    WEBINY_HEADING,
     WEBINY_IMAGE,
     // Custom elements
     HORIZONTAL_RULE,
