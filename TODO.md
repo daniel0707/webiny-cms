@@ -249,6 +249,37 @@ These required custom transformers since Lexical's built-in markdown transformer
 
 ---
 
+### 2.6 Expressive Code Support
+
+**Goal:** Full [expressive-code](https://expressive-code.com) integration in the Lexical editor so that code block metadata (title, line highlights, `wrap`, etc.) is stored, validated, and rendered correctly.
+
+**Phase 2.6.1: Preserve metadata on the opening ``` line** ✅ COMPLETE
+- [x] Created custom `WEBINY_CODE` transformer (admin + server) using `regExpStart: /^[ \t]*```([^\n]*)/`
+  - Captures the **full** rest of the opening line instead of just `(\w+)?`
+  - Stored verbatim in `CodeNode.__language`, round-trips through markdown toggle and GraphQL export
+  - Replaces Lexical's default `CODE` transformer in both `MarkdownToggleAction` and `MarkdownRenderer`
+
+**Phase 2.6.2: Editor-side expressive-code support** 🔲 TODO
+- [ ] **Validate code block meta in the editor**
+  - Parse and enforce valid expressive-code option syntax on the opening ``` line
+  - Show error/warning when unsupported options are typed
+  - Provide an info tooltip or CodeBlockOptionsAction toolbar button listing supported options
+- [ ] **Render expressive-code options visually in Rich Text Mode**
+  - Show `title` as a visible header on the code block
+  - Highlight the specified lines (`{1,3}`, `{2-5}`)
+  - Indicate `wrap`, `ins`/`del` markers, etc. with visible styling
+  - Consider a click-to-configure toolbar popup for common options (language, title, wrap, line ranges)
+- [ ] **Supported expressive-code options to handle:**
+  - `title="..."` — file name caption
+  - `{N}` / `{N-M}` / `{N,M}` — line highlight ranges
+  - `ins={N}` / `del={N}` — insertion/deletion markers
+  - `wrap` — word wrap flag
+  - `showLineNumbers` — show/hide line numbers
+  - `startLineNumber=N` — start line number override
+  - `frame="..."` — code/terminal/none/auto frame type
+
+---
+
 ## ✅ PHASE 2 COMPLETE - CMS Ready for Production!
 
 All markdown features implemented and tested:

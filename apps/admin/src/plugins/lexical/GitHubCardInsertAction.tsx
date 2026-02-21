@@ -29,15 +29,16 @@ export const GitHubCardInsertAction = () => {
     }, []);
 
     const insertGitHubCard = useCallback(() => {
-        if (!repoPath || !repoPath.includes('/')) {
-            alert('Please enter a valid repository path (e.g., "owner/repo")');
+        const trimmed = repoPath.trim();
+        if (!trimmed) {
+            alert('Please enter a repository path (e.g., "owner/repo") or a username/org (e.g., "withastro")');
             return;
         }
 
         editor.update(() => {
             const selection = $getSelection();
             if ($isRangeSelection(selection)) {
-                const githubCard = $createGitHubCardNode(repoPath);
+                const githubCard = $createGitHubCardNode(trimmed);
                 selection.insertNodes([githubCard]);
             }
         });
@@ -73,11 +74,11 @@ export const GitHubCardInsertAction = () => {
                             <Grid>
                                 <Cell span={12}>
                                     <Input
-                                        label="Repository Path"
-                                        description='Enter the repository path (e.g., "owner/repo" or "octocat/Hello-World")'
+                                        label="Repository or Username"
+                                        description='Enter a repo path (e.g., "owner/repo") or a GitHub username/org (e.g., "withastro")'
                                         value={repoPath}
                                         onChange={setRepoPath}
-                                        placeholder="owner/repo"
+                                        placeholder="owner/repo or username"
                                     />
                                 </Cell>
                             </Grid>

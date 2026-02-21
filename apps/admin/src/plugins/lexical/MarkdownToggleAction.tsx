@@ -8,12 +8,12 @@ import {
     BOLD_STAR,
     INLINE_CODE,
     ITALIC_STAR,
-    STRIKETHROUGH,
-    CODE
+    STRIKETHROUGH
 } from "@lexical/markdown";
 import { 
     WEBINY_HEADING,
     WEBINY_QUOTE,
+    WEBINY_CODE,
     WEBINY_LINK, 
     WEBINY_IMAGE, 
     HORIZONTAL_RULE, 
@@ -36,7 +36,7 @@ const TRANSFORMERS = [
     STRIKETHROUGH,
     WEBINY_HEADING,  // Use Webiny's HeadingNode for proper theme support
     WEBINY_QUOTE,    // Use Webiny's QuoteNode for proper theme support
-    CODE,
+    WEBINY_CODE,     // Full-line metadata preservation (expressive-code options)
     GITHUB_CARD,     // Single-line :::github{user/repo} - must come before ADMONITION
     CHARACTER_CHAT,  // Must come before ADMONITION to match :::[name](url) before :::type, and before WEBINY_IMAGE to match [name](url) in character chat context
     ADMONITION,

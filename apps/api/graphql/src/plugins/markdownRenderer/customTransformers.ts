@@ -9,6 +9,7 @@
  */
 
 import { ElementTransformer, TextMatchTransformer, Transformer } from "@lexical/markdown";
+import { $isCodeNode, CodeNode } from "@lexical/code";
 import { 
     $isLinkNode, 
     LinkNode, 
@@ -16,6 +17,8 @@ import {
     ImageNode,
     $isHeadingNode,
     HeadingNode,
+    $isQuoteNode,
+    QuoteNode,
     $isListNode as $isWebinyListNode,
     ListNode as WebinyListNode,
     $isListItemNode as $isWebinyListItemNode,
@@ -121,6 +124,30 @@ function exportListItems(
 }
 
 /**
+ * WEBINY_CODE transformer - Export only
+ *
+ * Outputs the full CodeNode language string (which may contain expressive-code
+ * metadata such as `js title="x" {1,3} wrap`) verbatim on the opening ``` line.
+ * This overrides the default Lexical CODE transformer so it runs first in the
+ * transformer chain and correctly preserves whatever was stored in CodeNode.language.
+ */
+export const WEBINY_CODE: Transformer = {
+    dependencies: [CodeNode],
+    export: (node: any) => {
+        if (!$isCodeNode(node)) {
+            return null;
+        }
+        const textContent = node.getTextContent();
+        const language = node.getLanguage() || '';
+        return '```' + language + (textContent ? '\n' + textContent : '') + '\n```';
+    },
+    regExpEnd: { optional: true, regExp: /[ \t]*```$/ },
+    regExpStart: /^[ \t]*```([^\n]*)/, // export-only — import handled by admin
+    replace: () => {},
+    type: 'multiline-element' as any
+} as Transformer;
+
+/**
  * Custom LINK transformer for Webiny's LinkNode
  */
 export const WEBINY_LINK: TextMatchTransformer = {
@@ -194,6 +221,25 @@ export const WEBINY_IMAGE: TextMatchTransformer = {
     regExp: /NEVER_MATCH/,
     replace: () => {},
     trigger: ')'
+};
+
+/**
+ * WEBINY_QUOTE transformer for server-side Markdown export
+ * Exports Webiny QuoteNode to Markdown blockquote syntax (> lines).
+ */
+export const WEBINY_QUOTE: ElementTransformer = {
+    dependencies: [QuoteNode],
+    export: (node, exportChildren) => {
+        if (!$isQuoteNode(node)) {
+            return null;
+        }
+        const lines = exportChildren(node).split('\n');
+        // Bare '>' for empty lines preserves the block boundary in markdown
+        return lines.map(line => line.length > 0 ? `> ${line}` : '>').join('\n');
+    },
+    regExp: /NEVER_MATCH/,
+    replace: () => {},
+    type: 'element'
 };
 
 /**
@@ -289,7 +335,7 @@ export const TABLE: ElementTransformer = {
 
 /**
  * GITHUB_CARD transformer
- * Uses remark directive syntax - leaf directive (two colons, no closing)
+ * Supports ::github{repo="owner/repo"} and ::github{user="username"}
  */
 export const GITHUB_CARD: ElementTransformer = {
     dependencies: [GitHubCardNode],
@@ -298,8 +344,9 @@ export const GITHUB_CARD: ElementTransformer = {
             return null;
         }
 
-        const repoPath = node.getRepoPath();
-        return `::github{repo="${repoPath}"}`;
+        const path = node.getRepoPath();
+        const attr = path.includes('/') ? 'repo' : 'user';
+        return `::github{${attr}="${path}"}`;
     },
     regExp: /NEVER_MATCH/,
     replace: () => {},
@@ -391,9 +438,11 @@ export function convertEmojisToShortcodes(text: string): string {
  */
 export const CUSTOM_TRANSFORMERS: Transformer[] = [
     // Webiny node replacements
+    WEBINY_CODE,     // Must come before Lexical's default CODE to capture full opening line
     WEBINY_LIST,
     WEBINY_LINK,
     WEBINY_HEADING,
+    WEBINY_QUOTE,
     WEBINY_IMAGE,
     // Custom elements
     HORIZONTAL_RULE,

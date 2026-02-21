@@ -1,5 +1,6 @@
-import { TextMatchTransformer, ElementTransformer } from "@lexical/markdown";
-import { $createTextNode, $isTextNode, $createParagraphNode, $isParagraphNode, $getRoot, TextNode, LexicalNode } from "lexical";
+import { TextMatchTransformer, ElementTransformer, Transformer } from "@lexical/markdown";
+import { $isCodeNode, CodeNode, $createCodeNode } from "@lexical/code";
+import { $createTextNode, $isTextNode, $createParagraphNode, $isParagraphNode, $getRoot, $createLineBreakNode, TextNode, LexicalNode } from "lexical";
 import { 
     $createLinkNode, $isLinkNode, LinkNode, 
     $createImageNode, $isImageNode, ImageNode,
@@ -54,7 +55,22 @@ export const WEBINY_HEADING: ElementTransformer = {
 
 /**
  * Custom QUOTE transformer for Webiny's QuoteNode
- * Uses Webiny's QuoteNode which extends Lexical's base QuoteNode
+ *
+ * A blockquote continues for every consecutive line that starts with '>'.
+ * Any line that does NOT start with '>' (including blank lines) ends the quote.
+ *
+ * Storage: a single QuoteNode whose children are inline nodes separated by
+ * LineBreakNodes, e.g. TextNode("a") + LineBreakNode + TextNode("") + LineBreakNode + TextNode("b")
+ * which exportChildren renders as "a\n\nb".
+ *
+ * Export: each '\n' in the exported string becomes either "> line" or bare ">"
+ * for blank lines, keeping the block intact for markdown parsers.
+ *
+ * Import: Lexical's $importBlocks always calls importTextFormatTransformers(textNode)
+ * AFTER replace() returns. We must therefore always move textNode into the QuoteNode
+ * (via splice) — never leave it orphaned in a removed paragraph. That is why we always
+ * splice([LineBreakNode, ...children]) in the merge path, even for bare '>' lines where
+ * children = [TextNode("")]. The empty TextNode is harmless.
  */
 export const WEBINY_QUOTE: ElementTransformer = {
     dependencies: [QuoteNode],
@@ -63,28 +79,108 @@ export const WEBINY_QUOTE: ElementTransformer = {
             return null;
         }
         const lines = exportChildren(node).split('\n');
-        return lines.map(line => `> ${line}`).join('\n');
+        // Blank lines within the block → bare '>' (no trailing space)
+        return lines.map(line => line.length > 0 ? `> ${line}` : '>').join('\n');
     },
-    // Only match the prefix, not the content
-    regExp: /^>\s/,
+    // Match '> text', '>text' (no space), and bare '>'
+    regExp: /^>\s?/,
     replace: (parentNode, children, _match, isImport) => {
-        if (isImport) {
-            const previousSibling = parentNode.getPreviousSibling();
-            // If previous sibling is also a quote, append to it
-            if ($isQuoteNode(previousSibling)) {
-                previousSibling.append(...children);
-                previousSibling.select(0, 0);
-                parentNode.remove();
-                return;
-            }
-            const quote = $createQuoteNode();
-            quote.append(...children);
-            parentNode.replace(quote);
-            quote.select(0, 0);
+        if (!isImport) { return; }
+
+        const previousSibling = parentNode.getPreviousSibling();
+
+        if ($isQuoteNode(previousSibling)) {
+            // Merge into the existing QuoteNode.
+            // Always use splice so textNode is moved into the tree — Lexical calls
+            // importTextFormatTransformers(textNode) after we return, so it must
+            // not be orphaned. For bare '>' lines children = [TextNode("")] which is fine.
+            previousSibling.splice(
+                previousSibling.getChildrenSize(),
+                0,
+                [$createLineBreakNode(), ...children]
+            );
+            previousSibling.select(0, 0);
+            parentNode.remove();
+            return;
         }
+
+        // First line of a new blockquote.
+        // A lone bare '>' with no content produces nothing useful — discard it.
+        const firstChildText = $isTextNode(children[0]) ? children[0].getTextContent() : '';
+        if (!firstChildText.trim()) {
+            parentNode.remove();
+            return;
+        }
+
+        const quote = $createQuoteNode();
+        quote.append(...children);
+        parentNode.replace(quote);
+        quote.select(0, 0);
     },
     type: 'element'
 };
+
+/**
+ * WEBINY_CODE transformer for fenced code blocks
+ *
+ * Overrides Lexical's built-in CODE transformer to capture the FULL opening line
+ * (not just \w+ language identifier), preserving expressive-code metadata such as:
+ *   ```js title="example.js" {1,3} wrap
+ *
+ * The complete string after ``` is stored verbatim in CodeNode's language field
+ * so it round-trips correctly through the markdown toggle and server export.
+ */
+export const WEBINY_CODE: Transformer = {
+    dependencies: [CodeNode],
+    export: (node: any) => {
+        if (!$isCodeNode(node)) {
+            return null;
+        }
+        const textContent = node.getTextContent();
+        const language = node.getLanguage() || '';
+        return '```' + language + (textContent ? '\n' + textContent : '') + '\n```';
+    },
+    regExpEnd: {
+        optional: true,
+        regExp: /[ \t]*```$/,
+    },
+    // Capture the FULL rest of the opening line (e.g. "js title=\"x\" {1,3} wrap")
+    // The built-in Lexical regex uses (\w+)? which only captures one plain word.
+    regExpStart: /^[ \t]*```([^\n]*)/,
+    replace: (rootNode: any, children: any, startMatch: any, _endMatch: any, linesInBetween: any) => {
+        const fullMeta: string = (startMatch[1] ?? '').trim();
+
+        if (!children && linesInBetween) {
+            const codeBlockNode = $createCodeNode(fullMeta || undefined);
+            let codeContent: string;
+
+            if (linesInBetween.length === 1) {
+                codeContent = linesInBetween[0].startsWith(' ')
+                    ? linesInBetween[0].slice(1)
+                    : linesInBetween[0];
+            } else {
+                const lines: string[] = [...linesInBetween];
+                // Trim leading/trailing blank lines (same as Lexical default)
+                while (lines.length > 0 && !lines[0].length) { lines.shift(); }
+                while (lines.length > 0 && !lines[lines.length - 1].length) { lines.pop(); }
+                if (lines.length > 0 && lines[0].startsWith(' ')) {
+                    lines[0] = lines[0].slice(1);
+                }
+                codeContent = lines.join('\n');
+            }
+
+            if (codeContent) {
+                codeBlockNode.append($createTextNode(codeContent));
+            }
+            rootNode.append(codeBlockNode);
+        } else if (children) {
+            const codeBlockNode = $createCodeNode(fullMeta || undefined);
+            codeBlockNode.append(...children);
+            rootNode.append(codeBlockNode);
+        }
+    },
+    type: 'multiline-element' as any
+} as Transformer;
 
 /**
  * Custom LINK transformer that works with Webiny's LinkNode
@@ -444,12 +540,14 @@ function mapToTableCells(textContent: string): Array<TableCellNode> | null {
 }
 
 /**
- * GITHUB_CARD transformer for GitHub repository cards
+ * GITHUB_CARD transformer for GitHub repository and user profile cards
  * 
- * Format: ::github{repo="user/repo"}
+ * Formats:
+ *   ::github{repo="owner/repo"}  — repository card
+ *   ::github{user="username"}    — user/org profile card
  * 
- * Uses remark directive syntax - leaf directive (two colons, no closing)
- * Leaf directives are block-level elements without content
+ * The stored value (repoPath) is either "owner/repo" (contains /) or "username".
+ * The attribute name is derived from the stored value on export.
  */
 export const GITHUB_CARD: ElementTransformer = {
     dependencies: [GitHubCardNode],
@@ -458,20 +556,20 @@ export const GITHUB_CARD: ElementTransformer = {
             return null;
         }
 
-        const repoPath = node.getRepoPath();
-        return `::github{repo="${repoPath}"}`;
+        const path = node.getRepoPath();
+        // If the path contains a slash it's a repo, otherwise a user/org profile
+        const attr = path.includes('/') ? 'repo' : 'user';
+        return `::github{${attr}="${path}"}`;
     },
-    regExp: /^::github\{repo="([^"]+)"\}\s*$/,
+    // Match both ::github{repo="..."} and ::github{user="..."}
+    regExp: /^::github\{(?:repo|user)="([^"]+)"\}\s*$/,
     replace: (parentNode, _1, match) => {
-        const repoPath = match[1];
-        
-        // Validate repo path format (should be user/repo or org/repo)
-        if (!repoPath || !repoPath.includes('/')) {
-            console.warn('[GITHUB_CARD] Invalid repo path format:', repoPath);
+        const path = match[1];
+        if (!path) {
+            console.warn('[GITHUB_CARD] Empty path in directive');
             return;
         }
-        
-        const githubCard = $createGitHubCardNode(repoPath);
+        const githubCard = $createGitHubCardNode(path);
         parentNode.replace(githubCard);
     },
     type: 'element'
