@@ -3,6 +3,9 @@ import * as aws from "@pulumi/aws";
 
 export default createApiApp({
     pulumiResourceNamePrefix: "wby-",
+    // Keep Lambda functions outside the VPC — no NAT Gateway needed.
+    // IAM policies (already in place below) handle access control.
+    vpc: false,
     pulumi(app) {
         const env = app.params.run.env;
         
